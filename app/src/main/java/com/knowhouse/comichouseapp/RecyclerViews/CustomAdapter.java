@@ -12,13 +12,14 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.knowhouse.comichouseapp.Data.Comics;
+import com.knowhouse.comichouseapp.Data.Marvel;
 import com.knowhouse.comichouseapp.R;
 
 import java.util.ArrayList;
 
 public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder> {
 
-    private ArrayList<Comics> localDataSet;
+    private ArrayList<Marvel> localDataSet;
 
     public static class ViewHolder extends RecyclerView.ViewHolder{
 
@@ -31,7 +32,7 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder
 
     }
 
-    public CustomAdapter(ArrayList<Comics> dataSet){
+    public CustomAdapter(ArrayList<Marvel> dataSet){
         localDataSet = dataSet;
     }
 
@@ -49,11 +50,11 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder
         ImageView imageView = cardView.findViewById(R.id.comic_thumbnail);
         TextView textView = cardView.findViewById(R.id.comic_title);
 
-        Comics preview = localDataSet.get(position);
+        Marvel marvelContent = localDataSet.get(position);
 
-        String comicTitle = preview.getName();
-        String comicId = preview.getId();
-        String thumbnailUrl = preview.getImageUrl();
+        String comicTitle = marvelContent.getName();
+        String comicId = marvelContent.getId();
+        String thumbnailUrl = marvelContent.getImageUrl();
 
         Glide.with(cardView).load(thumbnailUrl).into(imageView);
         textView.setText(comicTitle);

@@ -3,7 +3,6 @@ package com.knowhouse.comichouseapp.AppFragments;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -19,9 +18,11 @@ import com.android.volley.RetryPolicy;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.knowhouse.comichouseapp.Connectivity.MySingleton;
+import com.knowhouse.comichouseapp.Data.ComicSeries;
 import com.knowhouse.comichouseapp.Data.Comics;
+import com.knowhouse.comichouseapp.Data.Marvel;
 import com.knowhouse.comichouseapp.R;
-import com.knowhouse.comichouseapp.RecyclerViews.CustomAdapter;
+import com.knowhouse.comichouseapp.RecyclerViews.CategoryAdapter;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -39,8 +40,10 @@ import java.util.Date;
  */
 public class ComicStoreFragment extends Fragment {
 
-    private ArrayList<Comics> previewList;
-    private RecyclerView comicRecycler;
+    private ArrayList<Marvel> previewList;
+    private ArrayList<Marvel> seriesList;
+    private RecyclerView linearLayoutRecycler;
+    private ArrayList<ArrayList<Marvel>> category;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -87,7 +90,8 @@ public class ComicStoreFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view =  inflater.inflate(R.layout.fragment_comic_store, container, false);
-        comicRecycler = view.findViewById(R.id.comic_recycler);
+        linearLayoutRecycler = view.findViewById(R.id.linearlayout_recycler);
+        category = new ArrayList<ArrayList<Marvel>>();
         updateMyOperation();
         SwipeRefreshLayout mySwipeRefreshLayout = view.findViewById(R.id.swiperefreshlayout);
         mySwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -108,11 +112,14 @@ public class ComicStoreFragment extends Fragment {
         String hashUrl = timeStamp + privateKey + publicKey;
         String hash = hashString(hashUrl);
         String testUrl = url+"v1/public/comics?ts="+timeStamp+"&apikey="+publicKey+"&hash="+hash;
+        final String comicSeriesUrl = url+"v1/public/series?ts="+timeStamp+"&apikey="+publicKey+"&hash="+hash;
+
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, testUrl, null, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
                         retrieveData(response);
+                        comicSeriesJsonRequest(comicSeriesUrl);
                     }
                 }, new Response.ErrorListener() {
                     @Override
@@ -136,7 +143,44 @@ public class ComicStoreFragment extends Fragment {
                 error.printStackTrace();
             }
         });
+
         MySingleton.getInstance(getContext()).addToRequestQueue(jsonObjectRequest);
+
+            }
+
+    private void comicSeriesJsonRequest(String comicSeriesUrl){
+        JsonObjectRequest comicSeriesJsonRequest = new JsonObjectRequest
+                (Request.Method.GET, comicSeriesUrl, null, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        retrieveComicSeries(response);
+                        Toast.makeText(getContext(),"Comic Series success",Toast.LENGTH_LONG).show();
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        error.printStackTrace();
+                    }
+                });
+        comicSeriesJsonRequest.setRetryPolicy(new RetryPolicy() {
+            @Override
+            public int getCurrentTimeout() {
+                return 50000;
+            }
+
+            @Override
+            public int getCurrentRetryCount() {
+                return 50000;
+            }
+
+            @Override
+            public void retry(VolleyError error) throws VolleyError {
+                error.printStackTrace();
+            }
+        });
+
+        MySingleton.getInstance(getContext()).addToRequestQueue(comicSeriesJsonRequest);
+
     }
 
     private String hashString(String md5){
@@ -171,12 +215,40 @@ public class ComicStoreFragment extends Fragment {
                     String extension = "."+thumbnail.getString("extension");
                     String imageVariant = "/"+"portrait_medium";
                     String imageUrl = path+imageVariant+extension;
-                    Comics preview = new Comics(id,imageUrl,title);
+                    Marvel preview = new Comics(id,imageUrl,title);
                     previewList.add(preview);
                 }
-
+                category.add(previewList);
                 populateView();
-                Toast.makeText(getContext(),"Successful",Toast.LENGTH_LONG).show();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void retrieveComicSeries(JSONObject response){
+        try {
+            String status = response.getString("status");
+            if(status.equals("Ok")){
+                JSONObject data = response.getJSONObject("data");
+                JSONArray results = data.getJSONArray("results");
+                int count = data.getInt("count");
+                seriesList = new ArrayList<>();
+                for(int i = 0; i<count;i++){
+                    JSONObject arrayObj = results.getJSONObject(i);
+                    String id = arrayObj.getString("id");
+                    String title = arrayObj.getString("title");
+                    JSONObject thumbnail = arrayObj.getJSONObject("thumbnail");
+                    String path = thumbnail.getString("path");
+                    String extension = "."+thumbnail.getString("extension");
+                    String imageVariant = "/"+"portrait_medium";
+                    String imageUrl = path+imageVariant+extension;
+                    Marvel series = new ComicSeries(id,imageUrl,title);
+                    seriesList.add(series);
+                }
+
+                category.add(seriesList);
+                populateView();
             }
         } catch (JSONException e) {
             e.printStackTrace();
@@ -184,10 +256,11 @@ public class ComicStoreFragment extends Fragment {
     }
 
     private void populateView(){
+
         LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
-        layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
-        CustomAdapter adapter = new CustomAdapter(previewList);
-        comicRecycler.setAdapter(adapter);
-        comicRecycler.setLayoutManager(layoutManager);
+        layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
+        CategoryAdapter categoryAdapter = new CategoryAdapter(category,getActivity());
+        linearLayoutRecycler.setAdapter(categoryAdapter);
+        linearLayoutRecycler.setLayoutManager(layoutManager);
     }
 }
