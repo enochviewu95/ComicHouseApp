@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group
+        android:id="@+id/main_navigator">
+
+        <item android:id="@+id/newsFeedFragment"
+            android:title="@string/feed"
+            android:icon="@drawable/news"/>
+
+        <item android:id="@+id/comicStoreFragment"
+            android:title="@string/store"
+            android:icon="@drawable/store"
+            android:checked="true"/>
+
+        <item android:id="@+id/comicLibraryFragment"
+            android:title="@string/library"
+            android:icon="@drawable/book"/>
+
+        <item android:id="@+id/comicReaderFragment"
+            android:title="@string/reader"
+            android:icon="@drawable/reading"/>
+    </group>
+
+    <group
+        android:id="@+id/user_profile_navigator">
+
+        <item android:id="@+id/profilemenu"
+            android:title="@string/user_profile"
+            android:icon="@drawable/user"/>
+    </group>
+
+    <group
+        android:id="@+id/about_navigator">
+
+        <item android:id="@+id/informationmenu"
+            android:title="@string/about"
+            android:icon="@drawable/information" />
+
+    </group>
+
+</menu>
