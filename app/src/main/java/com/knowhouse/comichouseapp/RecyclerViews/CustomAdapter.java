@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.knowhouse.comichouseapp.Data.Comics;
 import com.knowhouse.comichouseapp.Data.Marvel;
+import com.knowhouse.comichouseapp.Interfaces.RecyclerViewClickInterface;
 import com.knowhouse.comichouseapp.R;
 
 import java.util.ArrayList;
@@ -20,11 +21,11 @@ import java.util.ArrayList;
 public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder> {
 
     private ArrayList<Marvel> localDataSet;
+    private RecyclerViewClickInterface recyclerViewClickInterface;
 
     public static class ViewHolder extends RecyclerView.ViewHolder{
 
         private final CardView cardView;
-
         public ViewHolder(CardView cardView) {
             super(cardView);
             this.cardView = cardView;
@@ -32,9 +33,11 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder
 
     }
 
-    public CustomAdapter(ArrayList<Marvel> dataSet){
+    public CustomAdapter(ArrayList<Marvel> dataSet, RecyclerViewClickInterface recyclerViewClickInterface){
         localDataSet = dataSet;
+        this.recyclerViewClickInterface = recyclerViewClickInterface;
     }
+
 
     @NonNull
     @Override
@@ -45,7 +48,7 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder
     }
 
     @Override
-    public void onBindViewHolder(@NonNull CustomAdapter.ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull CustomAdapter.ViewHolder holder, final int position) {
         CardView cardView = holder.cardView;
         ImageView imageView = cardView.findViewById(R.id.comic_thumbnail);
         TextView textView = cardView.findViewById(R.id.comic_title);
@@ -55,9 +58,13 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder
         String comicTitle = marvelContent.getName();
         String comicId = marvelContent.getId();
         String thumbnailUrl = marvelContent.getImageUrl();
+        final String comicUrl = marvelContent.getResourceUrl();
 
         Glide.with(cardView).load(thumbnailUrl).into(imageView);
         textView.setText(comicTitle);
+        cardView.setOnClickListener(view->{
+            recyclerViewClickInterface.onItemClick(position,comicUrl,view);
+        });
 
     }
 

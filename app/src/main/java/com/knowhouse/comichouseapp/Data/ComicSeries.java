@@ -2,8 +2,8 @@ package com.knowhouse.comichouseapp.Data;
 
 public class ComicSeries extends Marvel{
 
-    public ComicSeries(String id,String imageUrl,String name){
-       super(id,imageUrl,name);
+    public ComicSeries(String id,String imageUrl,String name,String resourceUrl){
+       super(id,imageUrl,name,resourceUrl);
     }
 
 }

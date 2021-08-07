@@ -3,12 +3,12 @@ package com.knowhouse.comichouseapp.Data;
 public class Category {
     private Comics preview;
     private ComicSeries series;
-    private Creators creators;
+    private Characters characters;
 
-    public Category(Comics preview,ComicSeries series,Creators creators){
+    public Category(Comics preview, ComicSeries series, Characters characters){
         this.preview = preview;
         this.series = series;
-        this.creators = creators;
+        this.characters = characters;
     }
 
     public Comics getPreview() {
@@ -19,7 +19,7 @@ public class Category {
         return series;
     }
 
-    public Creators getCreators() {
-        return creators;
+    public Characters getCharacters() {
+        return characters;
     }
 }

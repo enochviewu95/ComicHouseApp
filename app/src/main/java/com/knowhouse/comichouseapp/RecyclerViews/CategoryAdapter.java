@@ -10,11 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.knowhouse.comichouseapp.Data.Category;
-import com.knowhouse.comichouseapp.Data.ComicSeries;
-import com.knowhouse.comichouseapp.Data.Comics;
-import com.knowhouse.comichouseapp.Data.Creators;
 import com.knowhouse.comichouseapp.Data.Marvel;
+import com.knowhouse.comichouseapp.Interfaces.RecyclerViewClickInterface;
 import com.knowhouse.comichouseapp.R;
 
 import java.util.ArrayList;
@@ -23,6 +20,7 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.ViewHo
     private ArrayList<ArrayList<Marvel>> categoryDataSet;
     private CustomAdapter customAdapter;
     private Context context;
+    private RecyclerViewClickInterface recyclerViewClickInterface;
 
     public static class ViewHolder extends RecyclerView.ViewHolder{
         private final LinearLayout linearlayoutView;
@@ -34,9 +32,11 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.ViewHo
         }
     }
 
-    public CategoryAdapter(ArrayList<ArrayList<Marvel>> categoryDataSet, Context context) {
+    public CategoryAdapter(ArrayList<ArrayList<Marvel>> categoryDataSet, Context context,
+                           RecyclerViewClickInterface recyclerViewClickInterface) {
         this.categoryDataSet = categoryDataSet;
         this.context = context;
+        this.recyclerViewClickInterface = recyclerViewClickInterface;
     }
 
     @NonNull
@@ -50,7 +50,7 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.ViewHo
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         LinearLayout linearLayout = holder.linearlayoutView;
-        String[] names = {"Preview","Series","Creators"};
+        String[] names = {"Preview","Series","Characters"};
         TextView categoryTitle = linearLayout.findViewById(R.id.category_title);
         RecyclerView recyclerView = linearLayout.findViewById(R.id.category_recycler);
         categoryTitle.setText(names[position]);
@@ -59,7 +59,7 @@ public class CategoryAdapter extends RecyclerView.Adapter<CategoryAdapter.ViewHo
         LinearLayoutManager layoutManager = new LinearLayoutManager(context);
         layoutManager.setOrientation(LinearLayoutManager.HORIZONTAL);
 
-        customAdapter = new CustomAdapter(categories);
+        customAdapter = new CustomAdapter(categories,recyclerViewClickInterface);
         recyclerView.setAdapter(customAdapter);
         recyclerView.setLayoutManager(layoutManager);
     }

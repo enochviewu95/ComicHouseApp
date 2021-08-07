@@ -14,7 +14,11 @@
         android:id="@+id/comicStoreFragment"
         android:name="com.knowhouse.comichouseapp.AppFragments.ComicStoreFragment"
         android:label="fragment_comic_store"
-        tools:layout="@layout/fragment_comic_store" />
+        tools:layout="@layout/fragment_comic_store" >
+        <action
+            android:id="@+id/action_comicStoreFragment_to_webViewFragment"
+            app:destination="@id/webViewFragment" />
+    </fragment>
     <fragment
         android:id="@+id/comicReaderFragment"
         android:name="com.knowhouse.comichouseapp.AppFragments.ComicReaderFragment"
@@ -25,4 +29,13 @@
         android:name="com.knowhouse.comichouseapp.AppFragments.ComicLibraryFragment"
         android:label="fragment_comic_library"
         tools:layout="@layout/fragment_comic_library" />
+    <fragment
+        android:id="@+id/webViewFragment"
+        android:name="com.knowhouse.comichouseapp.AppFragments.WebViewFragment"
+        android:label="fragment_web_view"
+        tools:layout="@layout/fragment_web_view" >
+        <argument
+            android:name="pageUrl"
+            app:argType="string" />
+    </fragment>
 </navigation>

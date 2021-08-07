@@ -3,10 +3,12 @@ package com.knowhouse.comichouseapp.AppFragments;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
+import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,9 +20,11 @@ import com.android.volley.RetryPolicy;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.knowhouse.comichouseapp.Connectivity.MySingleton;
+import com.knowhouse.comichouseapp.Data.Characters;
 import com.knowhouse.comichouseapp.Data.ComicSeries;
 import com.knowhouse.comichouseapp.Data.Comics;
 import com.knowhouse.comichouseapp.Data.Marvel;
+import com.knowhouse.comichouseapp.Interfaces.RecyclerViewClickInterface;
 import com.knowhouse.comichouseapp.R;
 import com.knowhouse.comichouseapp.RecyclerViews.CategoryAdapter;
 
@@ -38,12 +42,14 @@ import java.util.Date;
  * Use the {@link ComicStoreFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class ComicStoreFragment extends Fragment {
+public class ComicStoreFragment extends Fragment implements RecyclerViewClickInterface {
 
     private ArrayList<Marvel> previewList;
     private ArrayList<Marvel> seriesList;
+    private ArrayList<Marvel> storyList;
     private RecyclerView linearLayoutRecycler;
     private ArrayList<ArrayList<Marvel>> category;
+    private String storyUrl;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -91,19 +97,13 @@ public class ComicStoreFragment extends Fragment {
         // Inflate the layout for this fragment
         View view =  inflater.inflate(R.layout.fragment_comic_store, container, false);
         linearLayoutRecycler = view.findViewById(R.id.linearlayout_recycler);
-        category = new ArrayList<ArrayList<Marvel>>();
+        category = new ArrayList<>();
         updateMyOperation();
-        SwipeRefreshLayout mySwipeRefreshLayout = view.findViewById(R.id.swiperefreshlayout);
-        mySwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                updateMyOperation();
-            }
-        });
         return view;
     }
 
     private void updateMyOperation() {
+
         Date date = new Date();
         String url = "http://gateway.marvel.com/";
         String publicKey ="29efec1ad7d18b56c048a30bcf81fc05";
@@ -113,6 +113,7 @@ public class ComicStoreFragment extends Fragment {
         String hash = hashString(hashUrl);
         String testUrl = url+"v1/public/comics?ts="+timeStamp+"&apikey="+publicKey+"&hash="+hash;
         final String comicSeriesUrl = url+"v1/public/series?ts="+timeStamp+"&apikey="+publicKey+"&hash="+hash;
+        storyUrl = url+"v1/public/characters?ts="+timeStamp+"&apikey="+publicKey+"&hash="+hash;
 
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
                 (Request.Method.GET, testUrl, null, new Response.Listener<JSONObject>() {
@@ -154,7 +155,7 @@ public class ComicStoreFragment extends Fragment {
                     @Override
                     public void onResponse(JSONObject response) {
                         retrieveComicSeries(response);
-                        Toast.makeText(getContext(),"Comic Series success",Toast.LENGTH_LONG).show();
+                        characterJsonRequest(storyUrl);
                     }
                 }, new Response.ErrorListener() {
                     @Override
@@ -183,6 +184,39 @@ public class ComicStoreFragment extends Fragment {
 
     }
 
+    private void characterJsonRequest(String comicStoryUrl){
+        JsonObjectRequest comicSeriesJsonRequest = new JsonObjectRequest
+                (Request.Method.GET, comicStoryUrl, null, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        retrieveStories(response);
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        error.printStackTrace();
+                    }
+                });
+        comicSeriesJsonRequest.setRetryPolicy(new RetryPolicy() {
+            @Override
+            public int getCurrentTimeout() {
+                return 50000;
+            }
+
+            @Override
+            public int getCurrentRetryCount() {
+                return 50000;
+            }
+
+            @Override
+            public void retry(VolleyError error) throws VolleyError {
+                error.printStackTrace();
+            }
+        });
+
+        MySingleton.getInstance(getContext()).addToRequestQueue(comicSeriesJsonRequest);
+    }
+
     private String hashString(String md5){
         try{
             MessageDigest md = MessageDigest.getInstance("MD5");
@@ -204,18 +238,23 @@ public class ComicStoreFragment extends Fragment {
             if(status.equals("Ok")){
                 JSONObject data = response.getJSONObject("data");
                 JSONArray results = data.getJSONArray("results");
+                String resourceUrl = null;
                 int count = data.getInt("count");
                 previewList = new ArrayList<>();
                 for(int i = 0; i<count;i++){
                     JSONObject arrayObj = results.getJSONObject(i);
+                    JSONArray url = arrayObj.getJSONArray("urls");
+                    JSONObject arraylist = url.getJSONObject(0);
+                    resourceUrl = arraylist.getString("url");
+
                     String id = arrayObj.getString("id");
                     String title = arrayObj.getString("title");
                     JSONObject thumbnail = arrayObj.getJSONObject("thumbnail");
                     String path = thumbnail.getString("path");
                     String extension = "."+thumbnail.getString("extension");
-                    String imageVariant = "/"+"portrait_medium";
+                    String imageVariant = "/"+"portrait_incredible";
                     String imageUrl = path+imageVariant+extension;
-                    Marvel preview = new Comics(id,imageUrl,title);
+                    Marvel preview = new Comics(id,imageUrl,title,resourceUrl);
                     previewList.add(preview);
                 }
                 category.add(previewList);
@@ -232,18 +271,22 @@ public class ComicStoreFragment extends Fragment {
             if(status.equals("Ok")){
                 JSONObject data = response.getJSONObject("data");
                 JSONArray results = data.getJSONArray("results");
+                String resourceUrl = null;
                 int count = data.getInt("count");
                 seriesList = new ArrayList<>();
                 for(int i = 0; i<count;i++){
                     JSONObject arrayObj = results.getJSONObject(i);
+                    JSONArray url = arrayObj.getJSONArray("urls");
+                    JSONObject arraylist = url.getJSONObject(0);
+                    resourceUrl = arraylist.getString("url");
                     String id = arrayObj.getString("id");
                     String title = arrayObj.getString("title");
                     JSONObject thumbnail = arrayObj.getJSONObject("thumbnail");
                     String path = thumbnail.getString("path");
                     String extension = "."+thumbnail.getString("extension");
-                    String imageVariant = "/"+"portrait_medium";
+                    String imageVariant = "/"+"portrait_incredible";
                     String imageUrl = path+imageVariant+extension;
-                    Marvel series = new ComicSeries(id,imageUrl,title);
+                    Marvel series = new ComicSeries(id,imageUrl,title,resourceUrl);
                     seriesList.add(series);
                 }
 
@@ -255,12 +298,52 @@ public class ComicStoreFragment extends Fragment {
         }
     }
 
+    private void retrieveStories(JSONObject response){
+        try {
+            String status = response.getString("status");
+            String resourceUrl = null;
+            if(status.equals("Ok")){
+                JSONObject data = response.getJSONObject("data");
+                JSONArray results = data.getJSONArray("results");
+                int count = data.getInt("count");
+                storyList = new ArrayList<>();
+                for(int i = 0; i<count;i++){
+                    JSONObject arrayObj = results.getJSONObject(i);
+                    JSONArray url = arrayObj.getJSONArray("urls");
+                    JSONObject arraylist = url.getJSONObject(0);
+                    resourceUrl = arraylist.getString("url");
+                    String id = arrayObj.getString("id");
+                    String title = arrayObj.getString("name");
+                    JSONObject thumbnail = arrayObj.getJSONObject("thumbnail");
+                    String path = thumbnail.getString("path");
+                    String extension = "."+thumbnail.getString("extension");
+                    String imageVariant = "/"+"portrait_incredible";
+                    String imageUrl = path+imageVariant+extension;
+                    Marvel characters = new Characters(id,imageUrl,title,resourceUrl);
+                    storyList.add(characters);
+                }
+
+                category.add(storyList);
+                populateView();
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void populateView(){
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
         layoutManager.setOrientation(LinearLayoutManager.VERTICAL);
-        CategoryAdapter categoryAdapter = new CategoryAdapter(category,getActivity());
+        CategoryAdapter categoryAdapter = new CategoryAdapter(category,getActivity(), this);
         linearLayoutRecycler.setAdapter(categoryAdapter);
         linearLayoutRecycler.setLayoutManager(layoutManager);
+    }
+
+    @Override
+    public void onItemClick(int position, String url, View view) {
+        Bundle bundle = new Bundle();
+        bundle.putString("comicUrl",url);
+        Navigation.findNavController(view).navigate(R.id.webViewFragment,bundle);
     }
 }
